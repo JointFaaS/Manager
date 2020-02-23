@@ -18,28 +18,28 @@ type Manager struct {
 
 // Config defines the neccessary settings about aliyun.Manager
 type Config struct {
-	regionID string
-	accessKeyID string
-	accessKeySecret string
+	RegionID string `yaml:"regionID"`
+	AccessKeyID string `yaml:"accessKeyID"`
+	AccessKeySecret string `yaml:"accessKeySecret"`
 
-	bucket string
+	Bucket string `yaml:"bucket"`
 }
 
 // NewManagerWithConfig create a manager with gived configuration
 func NewManagerWithConfig(config Config) (*Manager, error){
-	sdk, err := sdk.NewClientWithAccessKey(config.regionID, config.accessKeyID, config.accessKeySecret)
+	sdk, err := sdk.NewClientWithAccessKey(config.RegionID, config.AccessKeyID, config.AccessKeySecret)
 	if err != nil {
 		return nil, err
 	}
-	ossSdk, err := oss.New(config.regionID, config.accessKeyID, config.accessKeySecret)
+	ossSdk, err := oss.New(config.RegionID, config.AccessKeyID, config.AccessKeySecret)
 	if err != nil {
 		return nil, err
 	}
-	bucket, err := ossSdk.Bucket(config.bucket)
+	bucket, err := ossSdk.Bucket(config.Bucket)
 	if err != nil {
 		return nil, err
 	}
-	fcSdk, err := fc.NewClient(config.regionID, "", config.accessKeyID, config.accessKeySecret)
+	fcSdk, err := fc.NewClient(config.RegionID, "", config.AccessKeyID, config.AccessKeySecret)
 	if err != nil {
 		return nil, err
 	}

@@ -2,14 +2,13 @@ package main
 
 import (
 	"io/ioutil"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"path"
 
-	"github.com/JointFaaS/Manager/controller"
-	"github.com/JointFaaS/Manager/env"	
+	"github.com/JointFaaS/Manager/httpmanager"
+	"gopkg.in/yaml.v2"
 )
 
 func logInit() {
@@ -19,55 +18,28 @@ func logInit() {
 
 func main() {
 	logInit()
-	var config controller.Config
-	manager, err := controller.NewManager(config)
+	var config httpmanager.Config
+	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
 
-	createFunctionHandler := func (w http.ResponseWriter, r *http.Request) {
-		reader, err := r.MultipartReader()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	
-		formData := make(map[string][]byte)
-		dir, err := ioutil.TempDir("", "")
-		defer os.RemoveAll(dir)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		for {
-			part, err := reader.NextPart()
-			if err == io.EOF {
-				break
-			}
-			if part.FileName() == "" {
-				data, _ := ioutil.ReadAll(part)
-				formData[part.FormName()] = data
-			} else{
-				dst, _ := os.Create(path.Join(dir, part.FileName()))
-				defer dst.Close()
-				io.Copy(dst, part)
-			}
-		}
-		err = manager.UploadFunction(string(formData["funcName"]), dir, env.Env(formData["env"]))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		return
+	cfgFile, err := ioutil.ReadFile(path.Join(home, "/.jfManager/config.yml"))
+	if err != nil {
+		panic(err)
 	}
 
-	invokeHandler := func (w http.ResponseWriter, r *http.Request) {
-
+	err = yaml.UnmarshalStrict(cfgFile, &config)
+	if err != nil {
+		panic(err)
 	}
 
-	http.HandleFunc("/createfunction", createFunctionHandler)
-	http.HandleFunc("/invokefunction/", invokeHandler)
+	httpManager, err := httpmanager.NewManager(config)
+	if err != nil {
+		panic(err)
+	}
+
+	httpManager.SetRouter()
 
 	log.Print("start listening")
     log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))

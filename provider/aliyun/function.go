@@ -117,7 +117,6 @@ func compress(file *os.File, prefix string, zw *zip.Writer) error {
 func envToAliyunRuntime(e env.Env) string {
 	if e == env.PYTHON3 {
 		return "python3"
-	} else {
-		return ""
 	}
+	return ""
 }
