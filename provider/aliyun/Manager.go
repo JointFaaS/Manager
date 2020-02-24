@@ -22,6 +22,7 @@ type Config struct {
 	AccessKeyID string `yaml:"accessKeyID"`
 	AccessKeySecret string `yaml:"accessKeySecret"`
 
+	FcEndpoint string `yaml:"fcEndpoint"`
 	Bucket string `yaml:"bucket"`
 }
 
@@ -39,12 +40,11 @@ func NewManagerWithConfig(config Config) (*Manager, error){
 	if err != nil {
 		return nil, err
 	}
-	fcSdk, err := fc.NewClient(config.RegionID, "", config.AccessKeyID, config.AccessKeySecret)
+	fcSdk, err := fc.NewClient(config.FcEndpoint, "2016-08-15", config.AccessKeyID, config.AccessKeySecret)
 	if err != nil {
 		return nil, err
 	}
 
-	fcSdk.CreateService(fc.NewCreateServiceInput().WithServiceName(service))
 	manager := &Manager{
 		sdkClient: sdk,
 		ossClient: ossSdk,
