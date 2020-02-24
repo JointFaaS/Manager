@@ -8,26 +8,26 @@ import (
 	"os"
 )
 
-func compressDir(dir string) (*os.File, error) {
-	d, err := ioutil.TempFile("", "")
+func compressDir(dir string, dst string) (error) {
+	d, err := os.Create(dst)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	defer d.Close()
 	w := zip.NewWriter(d)
 	defer w.Close()
 	fileInfos, _ := ioutil.ReadDir(dir)
 	for _, fi := range fileInfos {
 		f, err := os.Open(path.Join(dir, fi.Name()))
 		if err != nil {
-			return nil, err
+			return err
 		}
 		err = compress(f, "", w)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	d.Seek(0, 0)
-	return d, nil
+	return nil
 }
 
 func compress(file *os.File, prefix string, zw *zip.Writer) error {

@@ -38,30 +38,28 @@ func deCompress(zipFile, dest string) error {
 	}
 
 	defer reader.Close()
-	for _, file := range reader.File {
-		rc, err := file.Open()
-		if err != nil {
+	for _, innerFile := range reader.File {
+        info := innerFile.FileInfo()
+        if info.IsDir() {
+            err = os.MkdirAll(innerFile.Name, os.ModePerm)
+            if err != nil {
+                return err
+            }
+            continue
+        }
+        srcFile, err := innerFile.Open()
+        if err != nil {
+            return err
+        }
+        defer srcFile.Close()
+        newFile, err := os.Create(path.Join(dest, innerFile.Name))
+        if err != nil {
 			return err
-		}
-		defer rc.Close()
-		filename := dest + file.Name
-		err = os.MkdirAll(getDir(filename), 0755)
-		if err != nil {
-			return err
-		}
-		w, err := os.Create(filename)
-		if err != nil {
-			return err
-		}
-		defer w.Close()
-		_, err = io.Copy(w, rc)
-		if err != nil {
-			return err
-		}
-		w.Close()
-		rc.Close()
-	}
-	return nil
+        }
+        io.Copy(newFile, srcFile)
+        newFile.Close()
+    }
+    return nil
 }
 
 // UploadHandler creates a new function
@@ -111,13 +109,18 @@ func (m* Manager) UploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	err = os.Mkdir(path.Join(dir, "code"), os.ModePerm)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	err = deCompress(path.Join(dir, "code.zip"), path.Join(dir, "code"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = m.platformManager.CreateFunction(funcName, path.Join(dir, "code"), e)
+	err = m.platformManager.CreateFunction(funcName, dir, e)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

@@ -13,7 +13,7 @@ func (m* Manager) createPython3Function(dir string) error {
 	}
 
 	// TODO: config
-	err = os.Link(path.Join(home, ".jfManager", "python3", "index.py") ,path.Join(dir, "index.py"))
+	err = os.Link(path.Join(home, ".jfManager", "python3", "index.py") ,path.Join(dir, "jointfaas.py"))
 	if err != nil {
 		return err
 	}
