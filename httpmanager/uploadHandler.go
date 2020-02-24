@@ -111,9 +111,13 @@ func (m* Manager) UploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	deCompress(path.Join(dir, "code.zip"), dir)
+	err = deCompress(path.Join(dir, "code.zip"), path.Join(dir, "code"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	err = m.platformManager.CreateFunction(funcName, dir, e)
+	err = m.platformManager.CreateFunction(funcName, path.Join(dir, "code"), e)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
