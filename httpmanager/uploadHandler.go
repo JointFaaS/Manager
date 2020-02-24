@@ -1,66 +1,14 @@
 package httpmanager
 
 import (
-	"archive/zip"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/JointFaaS/Manager/env"
 )
-
-func subString(str string, start, end int) string {
-	rs := []rune(str)
-	length := len(rs)
-
-	if start < 0 || start > length {
-		panic("start is wrong")
-	}
-
-	if end < start || end > length {
-		panic("end is wrong")
-	}
-
-	return string(rs[start:end])
-}
-
-func getDir(path string) string {
-	return subString(path, 0, strings.LastIndex(path, "/"))
-}
-
-func deCompress(zipFile, dest string) error {
-	reader, err := zip.OpenReader(zipFile)
-	if err != nil {
-		return err
-	}
-
-	defer reader.Close()
-	for _, innerFile := range reader.File {
-        info := innerFile.FileInfo()
-        if info.IsDir() {
-            err = os.MkdirAll(innerFile.Name, os.ModePerm)
-            if err != nil {
-                return err
-            }
-            continue
-        }
-        srcFile, err := innerFile.Open()
-        if err != nil {
-            return err
-        }
-        defer srcFile.Close()
-        newFile, err := os.Create(path.Join(dest, innerFile.Name))
-        if err != nil {
-			return err
-        }
-        io.Copy(newFile, srcFile)
-        newFile.Close()
-    }
-    return nil
-}
 
 // UploadHandler creates a new function
 func (m* Manager) UploadHandler(w http.ResponseWriter, r *http.Request) {

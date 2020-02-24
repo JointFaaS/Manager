@@ -15,7 +15,7 @@ type Config struct {
 // PlatformManager is a layer to decouple backend
 type PlatformManager interface {
 	CreateFunction(funcName string, dir string, e env.Env) (error)
-	InvokeFunction(funcName string, args *[]byte) ([]byte, error)
+	InvokeFunction(funcName string, args []byte) ([]byte, error)
 }
 // Manager works as an adaptor between JointFaaS and specified cloud
 type Manager struct {
