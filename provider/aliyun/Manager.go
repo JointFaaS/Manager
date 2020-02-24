@@ -23,6 +23,7 @@ type Config struct {
 	AccessKeySecret string `yaml:"accessKeySecret"`
 
 	FcEndpoint string `yaml:"fcEndpoint"`
+	OssEndpoint string `yaml:"ossEndpoint"`
 	Bucket string `yaml:"bucket"`
 }
 
@@ -32,7 +33,7 @@ func NewManagerWithConfig(config Config) (*Manager, error){
 	if err != nil {
 		return nil, err
 	}
-	ossSdk, err := oss.New(config.RegionID, config.AccessKeyID, config.AccessKeySecret)
+	ossSdk, err := oss.New(config.OssEndpoint, config.AccessKeyID, config.AccessKeySecret)
 	if err != nil {
 		return nil, err
 	}

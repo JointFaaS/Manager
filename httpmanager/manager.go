@@ -24,7 +24,7 @@ type Manager struct {
 
 // NewManager builds a manager with given config
 func NewManager(config Config) (*Manager, error)  {
-	m := Manager{}
+	m := &Manager{}
 	if config.Aliyun.AccessKeyID != "" {
 		aliyunManager, err := aliyun.NewManagerWithConfig(config.Aliyun)
 		if err != nil {
@@ -34,6 +34,6 @@ func NewManager(config Config) (*Manager, error)  {
 	} else {
 		return nil, errors.New("No available backend")
 	}
-	return nil, nil
+	return m, nil
 }
 

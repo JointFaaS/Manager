@@ -21,6 +21,6 @@ func ConvertStrToEnv(str string) (Env, error) {
 	if str == "python3" {
 		return PYTHON3, nil
 	} else {
-		return "", errors.New("Not support env")
+		return "", errors.New("Not support env:" + str)
 	}
 }
