@@ -14,6 +14,8 @@ type Manager struct {
 	fcClient *fc.Client
 
 	codeBucket *oss.Bucket
+
+	
 }
 
 // Config defines the neccessary settings about aliyun.Manager

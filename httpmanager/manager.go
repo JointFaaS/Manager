@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/JointFaaS/Manager/env"
+	"github.com/JointFaaS/Manager/function"
 	"github.com/JointFaaS/Manager/provider/aliyun"
 )
 
@@ -16,6 +17,7 @@ type Config struct {
 type PlatformManager interface {
 	CreateFunction(funcName string, dir string, e env.Env) (error)
 	InvokeFunction(funcName string, args []byte) ([]byte, error)
+	ListFunction() ([]*function.Meta, error)
 }
 // Manager works as an adaptor between JointFaaS and specified cloud
 type Manager struct {
