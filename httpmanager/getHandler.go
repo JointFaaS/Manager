@@ -1,31 +1,31 @@
 package httpmanager
 
 import (
-	"io/ioutil"
+	"encoding/json"
 	"net/http"
 )
 
-// InvokeHandler invokes a function
-func (m* Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
+// GetHandler returns a function metadata
+func (m* Manager) GetHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Not support method", http.StatusBadRequest)
 		return
 	}
 	r.ParseForm()
 	funcName := r.FormValue("funcName")
-	args, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Fail to read Payload", http.StatusBadRequest)
-		return
-	}
 
-	res, err := m.platformManager.InvokeFunction(funcName, args)
+	res, err := m.platformManager.GetFunction(funcName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	w.Write(res)
-	
+	jsonRet, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Write(jsonRet)
 	return
 }
 

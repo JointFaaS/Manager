@@ -28,8 +28,9 @@ func (m* Manager) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	_, isPresent := m.workers[req.WorkerID]
 	if isPresent == false {
-		newWorker, err := worker.New(strings.Split(r.RemoteAddr, ":")[0] + req.WorkerPort, req.WorkerID)
-		log.Printf("New worker: %s %s %s", r.RemoteAddr, req.WorkerPort, req.WorkerID)
+		workerAddr := strings.Split(r.RemoteAddr, ":")[0] + req.WorkerPort
+		newWorker, err := worker.New(workerAddr, req.WorkerID)
+		log.Printf("New worker: %s %s %s %s", r.RemoteAddr, req.WorkerPort, workerAddr, req.WorkerID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
