@@ -12,5 +12,4 @@ type Meta struct {
 	CodeChecksum          string           `json:"codeChecksum"`
 	EnvironmentVariables  map[string]string `json:"environmentVariables"`
 	CreatedTime           string           `json:"createdTime"`
-	CodeURI string	`json:"codeURI"`
 }

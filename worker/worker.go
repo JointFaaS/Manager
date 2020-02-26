@@ -24,6 +24,6 @@ func (*Worker) InitFunction(funcName string, image string, codeURI string) {
 }
 
 // CallFunction 
-func (*Worker) CallFunction(funcName string, args []byte) {
-
+func (*Worker) CallFunction(funcName string, args []byte) ([]byte, error){
+	return nil, nil
 }

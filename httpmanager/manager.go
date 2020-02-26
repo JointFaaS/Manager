@@ -5,8 +5,9 @@ import (
 
 	"github.com/JointFaaS/Manager/env"
 	"github.com/JointFaaS/Manager/function"
-	"github.com/JointFaaS/Manager/worker"
 	"github.com/JointFaaS/Manager/provider/aliyun"
+	"github.com/JointFaaS/Manager/worker"
+	"github.com/JointFaaS/Manager/scheduler"
 )
 
 // Config includes
@@ -20,22 +21,30 @@ type PlatformManager interface {
 	InvokeFunction(funcName string, args []byte) ([]byte, error)
 	ListFunction() ([]*function.Meta, error)
 	GetFunction(funcName string) (*function.Meta, error) 
+	GetCodeURI(funcName string) (string, error)
 }
+
+type workerSchedule struct {
+	funcName string
+	resCh chan*worker.Worker
+}
+
 // Manager works as an adaptor between JointFaaS and specified cloud
 type Manager struct {
 	platformManager PlatformManager
-
-	workers map[string]*worker.Worker
-
-	funcToWorker map[string][]*worker.Worker
+	scheduler *scheduler.Scheduler
 }
 
 // NewManager builds a manager with given config
 func NewManager(config Config) (*Manager, error)  {
-	m := &Manager{
-		workers: make(map[string]*worker.Worker),
-		funcToWorker: make(map[string][]*worker.Worker),
+	sche, err := scheduler.New()
+	if err != nil {
+		return nil, err
 	}
+	m := &Manager{
+		scheduler: sche,
+	}
+	sche.Work()
 	if config.Aliyun.AccessKeyID != "" {
 		aliyunManager, err := aliyun.NewManagerWithConfig(config.Aliyun)
 		if err != nil {

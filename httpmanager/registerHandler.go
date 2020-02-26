@@ -2,11 +2,8 @@ package httpmanager
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
-
-	"github.com/JointFaaS/Manager/worker"
 )
 
 type registrationBody struct {
@@ -26,17 +23,9 @@ func (m* Manager) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	_, isPresent := m.workers[req.WorkerID]
-	if isPresent == false {
-		workerAddr := strings.Split(r.RemoteAddr, ":")[0] + req.WorkerPort
-		newWorker, err := worker.New(workerAddr, req.WorkerID)
-		log.Printf("New worker: %s %s %s %s", r.RemoteAddr, req.WorkerPort, workerAddr, req.WorkerID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		m.workers[req.WorkerID] = newWorker
-	}
+	workerAddr := strings.Split(r.RemoteAddr, ":")[0] + req.WorkerPort
+	m.scheduler.RegisterWorker(req.WorkerID, workerAddr)
+
 	return
 }
 
