@@ -14,8 +14,6 @@ type Manager struct {
 	fcClient *fc.Client
 
 	codeBucket *oss.Bucket
-
-	
 }
 
 // Config defines the neccessary settings about aliyun.Manager
@@ -47,7 +45,7 @@ func NewManagerWithConfig(config Config) (*Manager, error){
 	if err != nil {
 		return nil, err
 	}
-
+	
 	manager := &Manager{
 		sdkClient: sdk,
 		ossClient: ossSdk,
