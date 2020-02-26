@@ -3,6 +3,8 @@ package httpmanager
 import (
 	"io/ioutil"
 	"net/http"
+
+	"github.com/JointFaaS/Manager/worker"
 )
 
 // InvokeHandler invokes a function
@@ -18,13 +20,26 @@ func (m* Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Fail to read Payload", http.StatusBadRequest)
 		return
 	}
+	resCh := make(chan *worker.Worker)
+	m.scheduler.GetWorker(funcName, resCh)
+	worker := <- resCh
 
-	res, err := m.platformManager.InvokeFunction(funcName, args)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	if worker == nil {
+		res, err := m.platformManager.InvokeFunction(funcName, args)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Write(res)
+	} else {
+		res, err := worker.CallFunction(funcName, args)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Write(res)
 	}
-	w.Write(res)
+
 	return
 }
 

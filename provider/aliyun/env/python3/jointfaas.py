@@ -2,7 +2,7 @@
 Aliyun python function handler wrapper
 
 """
-import index
+from . import index
 
 def handler(event, context):
     return index.handler(event)
