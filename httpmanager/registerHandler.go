@@ -23,7 +23,7 @@ func (m* Manager) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	workerAddr := strings.Split(r.RemoteAddr, ":")[0] + req.WorkerPort
+	workerAddr := strings.Split(r.RemoteAddr, ":")[0] + ":" + req.WorkerPort
 	m.scheduler.RegisterWorker(req.WorkerID, workerAddr)
 
 	return

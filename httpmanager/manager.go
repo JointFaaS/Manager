@@ -22,6 +22,7 @@ type PlatformManager interface {
 	ListFunction() ([]*function.Meta, error)
 	GetFunction(funcName string) (*function.Meta, error) 
 	GetCodeURI(funcName string) (string, error)
+	GetImage(funcName string) (string, error)
 }
 
 type workerSchedule struct {
@@ -37,22 +38,24 @@ type Manager struct {
 
 // NewManager builds a manager with given config
 func NewManager(config Config) (*Manager, error)  {
-	sche, err := scheduler.New()
-	if err != nil {
-		return nil, err
-	}
-	m := &Manager{
-		scheduler: sche,
-	}
-	sche.Work()
+	var platformManager PlatformManager
+	var err error
 	if config.Aliyun.AccessKeyID != "" {
-		aliyunManager, err := aliyun.NewManagerWithConfig(config.Aliyun)
+		platformManager, err = aliyun.NewManagerWithConfig(config.Aliyun)
 		if err != nil {
 			return nil, err
 		}
-		m.platformManager = aliyunManager
 	} else {
 		return nil, errors.New("No available backend")
+	}
+	sche, err := scheduler.New(platformManager)
+	if err != nil {
+		return nil, err
+	}
+	sche.Work()
+	m := &Manager{
+		scheduler: sche,
+		platformManager: platformManager,
 	}
 	return m, nil
 }

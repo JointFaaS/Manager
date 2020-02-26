@@ -3,6 +3,7 @@ package scheduler
 import (
 	"log"
 	"math/rand"
+	"time"
 
 	"github.com/JointFaaS/Manager/worker"
 )
@@ -11,6 +12,10 @@ type scheduleTask struct {
 	f func()
 }
 
+type PlatformStorageManager interface {
+	GetCodeURI(funcName string) (string, error)
+	GetImage(funcName string) (string, error)
+}
 // Scheduler has serveral roles:
 // dispatch tasks to workers
 // maintain metrics
@@ -21,6 +26,10 @@ type Scheduler struct {
 	funcToWorker map[string][]*worker.Worker
 
 	tasks chan *scheduleTask
+
+	funcInvokeMetrics map[string]int32
+
+	platformStorageManager PlatformStorageManager
 }
 
 // RegisterWorker 
@@ -41,11 +50,13 @@ func (s *Scheduler) RegisterWorker(workerID string, workerAddr string) {
 }
 
 // New returns a scheduler
-func New() (*Scheduler, error) {
+func New(p PlatformStorageManager) (*Scheduler, error) {
 	s := &Scheduler{
 		workers: make(map[string]*worker.Worker),
 		funcToWorker: make(map[string][]*worker.Worker),
 		tasks: make(chan *scheduleTask, 64),
+		funcInvokeMetrics: map[string]int32{},
+		platformStorageManager: p,
 	}
 	return s, nil
 }
@@ -57,6 +68,51 @@ func (s *Scheduler) Work() {
 			t.f()
 		}
 	}()
+	go func() {
+		for {
+			s.tasks <- &scheduleTask{
+				f: func() {
+					for funcName, times := range s.funcInvokeMetrics {
+						if times == 0 {
+							continue
+						}
+						s.funcInvokeMetrics[funcName] = 0
+						workers, isPresent := s.funcToWorker[funcName]
+						if isPresent == false {
+							s.funcToWorker[funcName] = make([]*worker.Worker, 0)
+						} else if len(workers) > 0 {
+							continue
+						}
+						for _, worker := range s.workers {
+							go func() {
+								// TODO: exception handle
+								image, err := s.platformStorageManager.GetImage(funcName)
+								if err != nil {
+									return
+								}
+								codeURI, err := s.platformStorageManager.GetCodeURI(funcName)
+								if err != nil {
+									return
+								}
+								err = worker.InitFunction(funcName, image, codeURI)
+								if err != nil {
+									return
+								}
+								s.tasks <- &scheduleTask{
+									f: func() {
+										s.funcToWorker[funcName] = append(s.funcToWorker[funcName], worker)
+									},
+								}
+							}()
+							break
+							// only run once, and golang range is random
+						}
+					}
+				},
+			}
+			time.Sleep(time.Second * 5)
+		}
+	}()
 }
 
 func (s *Scheduler) GetWorker(funcName string, resCh chan *worker.Worker) {
@@ -65,6 +121,12 @@ func (s *Scheduler) GetWorker(funcName string, resCh chan *worker.Worker) {
 			funcWorkers, isPresent := s.funcToWorker[funcName]
 			if isPresent == false || len(funcWorkers) == 0 {
 				resCh <- nil
+				times, isPresent := s.funcInvokeMetrics[funcName]
+				if isPresent == true {
+					s.funcInvokeMetrics[funcName] = times + 1
+				}else {
+					s.funcInvokeMetrics[funcName] = 1
+				}
 			} else {
 				resCh <- funcWorkers[rand.Intn(len(funcWorkers))]
 			}
