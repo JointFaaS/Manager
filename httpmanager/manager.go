@@ -5,6 +5,7 @@ import (
 
 	"github.com/JointFaaS/Manager/env"
 	"github.com/JointFaaS/Manager/function"
+	"github.com/JointFaaS/Manager/worker"
 	"github.com/JointFaaS/Manager/provider/aliyun"
 )
 
@@ -22,11 +23,15 @@ type PlatformManager interface {
 // Manager works as an adaptor between JointFaaS and specified cloud
 type Manager struct {
 	platformManager PlatformManager
+
+	workers map[string]*worker.Worker
 }
 
 // NewManager builds a manager with given config
 func NewManager(config Config) (*Manager, error)  {
-	m := &Manager{}
+	m := &Manager{
+		workers: make(map[string]*worker.Worker),
+	}
 	if config.Aliyun.AccessKeyID != "" {
 		aliyunManager, err := aliyun.NewManagerWithConfig(config.Aliyun)
 		if err != nil {
