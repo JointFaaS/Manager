@@ -20,6 +20,8 @@ const (
 func ConvertStrToEnv(str string) (Env, error) {
 	if str == "python3" {
 		return PYTHON3, nil
+	} else if str == "java8" {
+		return JAVA8, nil
 	} else {
 		return "", errors.New("Not support env:" + str)
 	}
