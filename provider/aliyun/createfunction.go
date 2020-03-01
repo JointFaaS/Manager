@@ -31,7 +31,7 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 		return err
 	}
 
-	err = m.codeBucket.PutObjectFromFile(funcName, aliyunZip)
+	err = m.aliCodeBucket.PutObjectFromFile(funcName, aliyunZip)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 			Runtime: &runtime,
 			Initializer: &initializer,
 			Handler: &handler,
-			Code: fc.NewCode().WithOSSBucketName(m.codeBucket.BucketName).WithOSSObjectName(funcName),
+			Code: fc.NewCode().WithOSSBucketName(m.aliCodeBucket.BucketName).WithOSSObjectName(funcName),
 		},
 	})
 	if err != nil {

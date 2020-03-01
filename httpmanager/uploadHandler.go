@@ -62,6 +62,11 @@ func (m* Manager) UploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	err = m.platformManager.SaveCode(funcName, path.Join(dir, "code.zip"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	err = deCompress(path.Join(dir, "code.zip"), path.Join(dir, "code"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

@@ -23,6 +23,7 @@ type PlatformManager interface {
 	GetFunction(funcName string) (*function.Meta, error) 
 	GetCodeURI(funcName string) (string, error)
 	GetImage(funcName string) (string, error)
+	SaveCode(funcName string, file string) (error)
 }
 
 type workerSchedule struct {
