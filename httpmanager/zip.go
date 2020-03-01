@@ -17,7 +17,7 @@ func deCompress(zipFile, dest string) error {
 	for _, innerFile := range reader.File {
         info := innerFile.FileInfo()
         if info.IsDir() {
-            err = os.MkdirAll(innerFile.Name, os.ModePerm)
+            err = os.MkdirAll(path.Join(dest, innerFile.Name), os.ModePerm)
             if err != nil {
                 return err
             }
@@ -28,6 +28,7 @@ func deCompress(zipFile, dest string) error {
             return err
         }
         defer srcFile.Close()
+
         newFile, err := os.Create(path.Join(dest, innerFile.Name))
         if err != nil {
 			return err

@@ -8,9 +8,7 @@ import (
 	"github.com/aliyun/fc-go-sdk"
 )
 
-var handler = "jointfaas.handler"
 var service = "jointfaas"
-
 
 // CreateFunction :
 // sourceURL can be created by UploadSourceCode
@@ -18,7 +16,9 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 	var err error
 	if e == env.PYTHON3 {
 		err = m.createPython3Function(path.Join(dir, "code"))
-	}else {
+	}else if e == env.JAVA8 {
+		err = m.createJava8Function(path.Join(dir, "code"))
+	} else {
 		return errors.New("Not support Env")
 	}
 	if err != nil {
@@ -31,18 +31,19 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 		return err
 	}
 
-	err = m.codeBucket.PutObjectFromFile(funcName, aliyunZip)
+	err = m.aliCodeBucket.PutObjectFromFile(funcName, aliyunZip)
 	if err != nil {
 		return err
 	}
-	runtime := envToAliyunRuntime(e)
+	runtime, handler, initializer := envToAliyunEnv(e)
 	_, err = m.fcClient.CreateFunction(&fc.CreateFunctionInput{
 		ServiceName: &service,
 		FunctionCreateObject: fc.FunctionCreateObject{
 			FunctionName: &funcName,
 			Runtime: &runtime,
+			Initializer: &initializer,
 			Handler: &handler,
-			Code: fc.NewCode().WithOSSBucketName(m.codeBucket.BucketName).WithOSSObjectName(funcName),
+			Code: fc.NewCode().WithOSSBucketName(m.aliCodeBucket.BucketName).WithOSSObjectName(funcName),
 		},
 	})
 	if err != nil {
@@ -51,9 +52,11 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 	return nil
 }
 
-func envToAliyunRuntime(e env.Env) string {
+func envToAliyunEnv(e env.Env) (string, string, string) {
 	if e == env.PYTHON3 {
-		return "python3"
+		return "python3", "jointfaas.handler", ""
+	} else if e == env.JAVA8 {
+		return "java8", "jointfaas.AliIndex::handleRequest", "jointfaas.AliIndex::initialize"
 	}
-	return ""
+	return "", "", ""
 }

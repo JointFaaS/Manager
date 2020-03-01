@@ -13,7 +13,10 @@ type Manager struct {
 
 	fcClient *fc.Client
 
-	codeBucket *oss.Bucket
+	// original code
+	userCodeBucket *oss.Bucket
+	// aliyun specified code
+	aliCodeBucket *oss.Bucket
 }
 
 // Config defines the neccessary settings about aliyun.Manager
@@ -24,7 +27,8 @@ type Config struct {
 
 	FcEndpoint string `yaml:"fcEndpoint"`
 	OssEndpoint string `yaml:"ossEndpoint"`
-	Bucket string `yaml:"bucket"`
+	UserCodeBucket string `yaml:"userCodeBucket"`
+	AliCodeBucket string `yaml:"aliCodeBucket"`
 }
 
 // NewManagerWithConfig create a manager with gived configuration
@@ -37,7 +41,11 @@ func NewManagerWithConfig(config Config) (*Manager, error){
 	if err != nil {
 		return nil, err
 	}
-	bucket, err := ossSdk.Bucket(config.Bucket)
+	userBucket, err := ossSdk.Bucket(config.UserCodeBucket)
+	if err != nil {
+		return nil, err
+	}
+	aliBucket, err := ossSdk.Bucket(config.AliCodeBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +57,8 @@ func NewManagerWithConfig(config Config) (*Manager, error){
 	manager := &Manager{
 		sdkClient: sdk,
 		ossClient: ossSdk,
-		codeBucket: bucket,
+		userCodeBucket: userBucket,
+		aliCodeBucket: aliBucket,
 		fcClient: fcSdk,
 	}
 	return manager, nil
