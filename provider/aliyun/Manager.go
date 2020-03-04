@@ -31,7 +31,7 @@ type Config struct {
 	AliCodeBucket string `yaml:"aliCodeBucket"`
 }
 
-// NewManagerWithConfig create a manager with gived configuration
+// NewManagerWithConfig create a manager with given configuration
 func NewManagerWithConfig(config Config) (*Manager, error){
 	sdk, err := sdk.NewClientWithAccessKey(config.RegionID, config.AccessKeyID, config.AccessKeySecret)
 	if err != nil {
