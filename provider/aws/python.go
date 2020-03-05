@@ -1,4 +1,4 @@
-package aliyun
+package aws
 
 import (
 	"os"
@@ -13,7 +13,7 @@ func (m* Manager) createPython3Function(dir string) error {
 	}
 
 	// TODO: config
-	err = os.Link(path.Join(home, ".jfManager", "ali", "python3", "index.py") ,path.Join(dir, "jointfaas.py"))
+	err = os.Link(path.Join(home, ".jfManager", "aws", "python3", "index.py") ,path.Join(dir, "jointfaas.py"))
 	if err != nil {
 		return err
 	}

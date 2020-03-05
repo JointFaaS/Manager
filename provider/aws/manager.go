@@ -1,6 +1,9 @@
 package aws
 
 import (
+	"path"
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -12,6 +15,12 @@ import (
 type Manager struct {
 	lambdaClient *lambda.Lambda
 	s3Client *s3.S3
+
+
+	userCodeBucket string
+	awsCodeBucket string
+	
+	addonsDir string
 }
 
 // Config defines the neccessary settings about aws.Manager
@@ -36,9 +45,18 @@ func NewManagerWithConfig(config Config) (*Manager, error){
 	}))
 	lambdaClient := lambda.New(sess)
 	s3Client := s3.New(sess)
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
 	manager := &Manager{
 		lambdaClient: lambdaClient,
 		s3Client: s3Client,
+		userCodeBucket: config.UserCodeBucket,
+		awsCodeBucket: config.AwsCodeBucket,
+		addonsDir: path.Join(home, ".jfManager", "aws"),
 	}
 	return manager, nil
 }
