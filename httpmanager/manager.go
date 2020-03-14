@@ -6,13 +6,15 @@ import (
 	"github.com/JointFaaS/Manager/env"
 	"github.com/JointFaaS/Manager/function"
 	"github.com/JointFaaS/Manager/provider/aliyun"
-	"github.com/JointFaaS/Manager/worker"
+	"github.com/JointFaaS/Manager/provider/aws"
 	"github.com/JointFaaS/Manager/scheduler"
+	"github.com/JointFaaS/Manager/worker"
 )
 
 // Config includes
 type Config struct {
 	Aliyun aliyun.Config `yaml:"aliyun"`
+	Aws    aws.Config `yaml:"aws"`
 }
 
 // PlatformManager is a layer to decouple backend
@@ -44,6 +46,11 @@ func NewManager(config Config) (*Manager, error)  {
 	var err error
 	if config.Aliyun.AccessKeyID != "" {
 		platformManager, err = aliyun.NewManagerWithConfig(config.Aliyun)
+		if err != nil {
+			return nil, err
+		}
+	} else if config.Aws.AccessKeyID != "" {
+		platformManager, err = aws.NewManagerWithConfig(config.Aws)
 		if err != nil {
 			return nil, err
 		}
