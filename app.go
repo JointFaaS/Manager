@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path"
 
@@ -13,7 +12,7 @@ import (
 
 func logInit() {
 	log.SetPrefix("TRACE: ")
-    log.SetFlags(log.Ldate | log.Lmicroseconds | log.Llongfile)
+	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Llongfile)
 }
 
 func main() {
@@ -39,8 +38,6 @@ func main() {
 		panic(err)
 	}
 
-	httpManager.SetRouter()
-
 	log.Print("start listening")
-    log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
+	log.Fatal(httpManager.ListenAndServe())
 }

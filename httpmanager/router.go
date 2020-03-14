@@ -2,11 +2,15 @@ package httpmanager
 
 import "net/http"
 
-// SetRouter initialise the http handler
-func (m * Manager) SetRouter() {
-	http.HandleFunc("/createfunction", m.UploadHandler)
-	http.HandleFunc("/invoke", m.InvokeHandler)
-	http.HandleFunc("/register", m.RegisterHandler)
-	http.HandleFunc("/list", m.ListHandler)
-	http.HandleFunc("/get", m.GetHandler)
+func (m *Manager) setRouter() {
+	m.server.HandleFunc("/createfunction", m.UploadHandler)
+	m.server.HandleFunc("/invoke", m.InvokeHandler)
+	m.server.HandleFunc("/register", m.RegisterHandler)
+	m.server.HandleFunc("/list", m.ListHandler)
+	m.server.HandleFunc("/get", m.GetHandler)
+}
+
+// ListenAndServe starts the Manager main process
+func (m *Manager) ListenAndServe() error {
+	return http.ListenAndServe(":"+m.port, m.server)
 }
