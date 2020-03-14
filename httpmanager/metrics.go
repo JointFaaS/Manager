@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	totalRequests = prometheus.NewCounterVec(
+	fnRequests = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "manager",
 			Subsystem: "requests",
-			Name: "processed_total",
+			Name: "fn_processed_total",
 			Help: "Number of processed requests.",
 		},
 		[]string{"funcName"},
@@ -18,5 +18,6 @@ var (
 )
 
 func (m *Manager) setMetrics() {
+	prometheus.MustRegister(fnRequests)
 	m.server.Handle("/metrics", promhttp.Handler())
 }

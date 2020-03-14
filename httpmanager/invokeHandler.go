@@ -25,7 +25,7 @@ func (m* Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 	worker := <- resCh
 
 	// prom metrics
-	totalRequests.WithLabelValues(funcName).Inc()
+	fnRequests.WithLabelValues(funcName).Inc()
 
 	if worker == nil {
 		res, err := m.platformManager.InvokeFunction(funcName, args)
