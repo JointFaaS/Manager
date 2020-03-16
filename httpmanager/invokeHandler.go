@@ -24,6 +24,9 @@ func (m* Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 	m.scheduler.GetWorker(funcName, resCh)
 	worker := <- resCh
 
+	// prom metrics
+	fnRequests.WithLabelValues(funcName).Inc()
+
 	if worker == nil {
 		res, err := m.platformManager.InvokeFunction(funcName, args)
 		if err != nil {
