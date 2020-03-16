@@ -2,8 +2,9 @@ package aws
 
 import (
 	"errors"
-	"path"
+	"fmt"
 	"os"
+	"path"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -42,6 +43,9 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 	}
 	
 	runtime, handler := envToAWSEnv(e)
+
+	// arn:${Partition}:lambda:${Region}:${Account}:function:${FunctionName}
+	role := fmt.Sprintf("arn:%s:lambda:%s:%s:function:%s", m.lambdaClient.PartitionID, *m.lambdaClient.Config.Region, m.account, funcName)
 	_, err = m.lambdaClient.CreateFunction(&lambda.CreateFunctionInput{
 		Code: &lambda.FunctionCode{
 			S3Bucket: &m.awsCodeBucket,
@@ -50,6 +54,7 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 		FunctionName: &funcName,
 		Runtime: &runtime,
 		Handler: &handler,
+		Role: &role,
 	})
 	if err != nil {
 		return err
