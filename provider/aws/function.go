@@ -15,7 +15,7 @@ import (
 // CreateFunction creates a function on lambda
 func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error) {
 	if e == env.PYTHON3 {
-		m.injectPython3Handler(dir)
+		m.injectPython3Handler(path.Join(dir, "code"))
 	} else if e == env.JAVA8 {
 
 	} else {
@@ -32,14 +32,17 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 		return err
 	}
 
-	m.s3Client.PutObject(&s3.PutObjectInput{
+	_, err = m.s3Client.PutObject(&s3.PutObjectInput{
 		Bucket: &m.awsCodeBucket,
 		Key: &funcName,
 		Body: body,
 	})
+	if err != nil {
+		return err
+	}
 	
 	runtime, handler := envToAWSEnv(e)
-	m.lambdaClient.CreateFunction(&lambda.CreateFunctionInput{
+	_, err = m.lambdaClient.CreateFunction(&lambda.CreateFunctionInput{
 		Code: &lambda.FunctionCode{
 			S3Bucket: &m.awsCodeBucket,
 			S3Key: &funcName,
@@ -48,6 +51,10 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 		Runtime: &runtime,
 		Handler: &handler,
 	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
