@@ -15,16 +15,19 @@ import (
 
 // CreateFunction creates a function on lambda
 func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error) {
+	var err error
 	if e == env.PYTHON3 {
-		m.injectPython3Handler(path.Join(dir, "code"))
+		err = m.injectPython3Handler(path.Join(dir, "code"))
 	} else if e == env.JAVA8 {
 
 	} else {
 		return errors.New("Not support env")
 	}
-
+	if err != nil {
+		return err
+	}
 	awsZip := path.Join(dir, "aws.zip")
-	err := compressDir(path.Join(dir, "code"), awsZip)
+	err = compressDir(path.Join(dir, "code"), awsZip)
 	if err != nil {
 		return err
 	}
@@ -129,7 +132,7 @@ func (m *Manager) DeleteFunction(funcName string) (error) {
 
 func envToAWSEnv(e env.Env) (string, string) {
 	if e == env.PYTHON3 {
-		return "python3", "jointfaas.handler"
+		return "python3.6", "jointfaas.handler"
 	} else if e == env.JAVA8 {
 		return "java8", "jointfaas.AliIndex::handleRequest"
 	}
