@@ -3,11 +3,11 @@ package aws
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/JointFaaS/Manager/env"
 	"github.com/JointFaaS/Manager/function"
@@ -31,16 +31,12 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 	if err != nil {
 		return err
 	}
-	body, err := os.Open(awsZip)
+	awsZipReader, err := os.Open(awsZip)
 	if err != nil {
 		return err
 	}
 
-	_, err = m.s3Client.PutObject(&s3.PutObjectInput{
-		Bucket: &m.awsCodeBucket,
-		Key: &funcName,
-		Body: body,
-	})
+	awsZipByte, err := ioutil.ReadAll(awsZipReader)
 	if err != nil {
 		return err
 	}
@@ -53,6 +49,7 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 		Code: &lambda.FunctionCode{
 			S3Bucket: &m.awsCodeBucket,
 			S3Key: &funcName,
+			ZipFile: awsZipByte,
 		},
 		FunctionName: &funcName,
 		Runtime: &runtime,
