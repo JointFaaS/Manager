@@ -44,8 +44,6 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 
 	_, err = m.lambdaClient.CreateFunction(&lambda.CreateFunctionInput{
 		Code: &lambda.FunctionCode{
-			S3Bucket: &m.awsCodeBucket,
-			S3Key: &funcName,
 			ZipFile: awsZipByte,
 		},
 		FunctionName: &funcName,
