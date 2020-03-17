@@ -17,6 +17,7 @@ type Manager struct {
 	s3Client *s3.S3
 
 	account string
+	lambdaRole string
 
 	userCodeBucket string
 	awsCodeBucket string
@@ -30,6 +31,7 @@ type Config struct {
 	AccessKeyID string `yaml:"accessKeyID"`
 	AccessKeySecret string `yaml:"accessKeySecret"`
 	Account string `yaml:"account"`
+	LambdaRole string `yaml:"lambdaRole"`
 
 	UserCodeBucket string `yaml:"userCodeBucket"`
 	AwsCodeBucket string `yaml:"awsCodeBucket"`
@@ -60,6 +62,7 @@ func NewManagerWithConfig(config Config) (*Manager, error){
 		awsCodeBucket: config.AwsCodeBucket,
 		addonsDir: path.Join(home, ".jfManager", "aws"),
 		account: config.Account,
+		lambdaRole: config.LambdaRole,
 	}
 	return manager, nil
 }
