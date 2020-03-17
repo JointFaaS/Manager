@@ -2,11 +2,11 @@ package aws
 
 import (
 	"errors"
-	"path"
+	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/JointFaaS/Manager/env"
 	"github.com/JointFaaS/Manager/function"
@@ -14,40 +14,47 @@ import (
 
 // CreateFunction creates a function on lambda
 func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error) {
+	var err error
 	if e == env.PYTHON3 {
-		m.injectPython3Handler(dir)
+		err = m.injectPython3Handler(path.Join(dir, "code"))
 	} else if e == env.JAVA8 {
 
 	} else {
 		return errors.New("Not support env")
 	}
-
+	if err != nil {
+		return err
+	}
 	awsZip := path.Join(dir, "aws.zip")
-	err := compressDir(path.Join(dir, "code"), awsZip)
+	err = compressDir(path.Join(dir, "code"), awsZip)
 	if err != nil {
 		return err
 	}
-	body, err := os.Open(awsZip)
+	awsZipReader, err := os.Open(awsZip)
 	if err != nil {
 		return err
 	}
 
-	m.s3Client.PutObject(&s3.PutObjectInput{
-		Bucket: &m.awsCodeBucket,
-		Key: &funcName,
-		Body: body,
-	})
+	awsZipByte, err := ioutil.ReadAll(awsZipReader)
+	if err != nil {
+		return err
+	}
 	
 	runtime, handler := envToAWSEnv(e)
-	m.lambdaClient.CreateFunction(&lambda.CreateFunctionInput{
+
+	_, err = m.lambdaClient.CreateFunction(&lambda.CreateFunctionInput{
 		Code: &lambda.FunctionCode{
-			S3Bucket: &m.awsCodeBucket,
-			S3Key: &funcName,
+			ZipFile: awsZipByte,
 		},
 		FunctionName: &funcName,
 		Runtime: &runtime,
 		Handler: &handler,
+		Role: &m.lambdaRole,
 	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -117,7 +124,7 @@ func (m *Manager) DeleteFunction(funcName string) (error) {
 
 func envToAWSEnv(e env.Env) (string, string) {
 	if e == env.PYTHON3 {
-		return "python3", "jointfaas.handler"
+		return "python3.6", "jointfaas.handler"
 	} else if e == env.JAVA8 {
 		return "java8", "jointfaas.AliIndex::handleRequest"
 	}
