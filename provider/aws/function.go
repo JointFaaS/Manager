@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
 
@@ -13,8 +14,16 @@ import (
 )
 
 // CreateFunction creates a function on lambda
-func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error) {
+func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS string, timeoutS string) (error) {
 	var err error
+	memorySize, err := strconv.ParseInt(memoryS, 10, 64)
+	if err != nil {
+		return err
+	}
+	timeout, err := strconv.ParseInt(timeoutS, 10, 64)
+	if err != nil {
+		return err
+	}
 	if e == env.PYTHON3 {
 		err = m.injectPython3Handler(path.Join(dir, "code"))
 	} else if e == env.JAVA8 {
@@ -50,6 +59,8 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 		Runtime: &runtime,
 		Handler: &handler,
 		Role: &m.lambdaRole,
+		MemorySize: &memorySize,
+		Timeout: &timeout,
 	})
 	if err != nil {
 		return err

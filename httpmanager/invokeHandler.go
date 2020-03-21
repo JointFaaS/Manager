@@ -1,28 +1,59 @@
 package httpmanager
 
 import (
-	"io/ioutil"
+	"encoding/json"
+	"encoding/base64"
 	"net/http"
 
 	"github.com/JointFaaS/Manager/worker"
 )
 
+type invokeBody struct {
+	FuncName string `json:"funcName"`
+	Args     string `json:"args"`
+
+	// 'true' : may use native serverless, optimize cold-boot
+	// 'false' : prevent manager to use native serverless. avoid the limits of platform.
+	EnableNative string `json:"enableNative"`
+}
+
 // InvokeHandler invokes a function
-func (m* Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
+func (m *Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Not support method", http.StatusBadRequest)
 		return
 	}
-	r.ParseForm()
-	funcName := r.FormValue("funcName")
-	args, err := ioutil.ReadAll(r.Body)
+	var req invokeBody
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	funcName := req.FuncName
+	args, err := base64.StdEncoding.DecodeString(req.Args)
 	if err != nil {
 		http.Error(w, "Fail to read Payload", http.StatusBadRequest)
 		return
 	}
 	resCh := make(chan *worker.Worker)
-	m.scheduler.GetWorker(funcName, resCh)
-	worker := <- resCh
+
+	var worker *worker.Worker = nil
+	if req.EnableNative == "true" {
+		m.scheduler.GetWorker(funcName, resCh)
+		worker = <-resCh
+	} else if req.EnableNative == "false" {
+		m.scheduler.GetWorkerMust(funcName, resCh)
+		worker = <- resCh
+		if worker == nil {
+			http.Error(w, "No available worker", http.StatusBadRequest)
+			return
+		}
+	} else {
+		http.Error(w, "Invalid enableNative, it must be 'true' or 'false'", http.StatusBadRequest)
+		return
+	}
+
+
 
 	// prom metrics
 	fnRequests.WithLabelValues(funcName).Inc()
@@ -45,4 +76,3 @@ func (m* Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
-

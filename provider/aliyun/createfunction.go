@@ -3,6 +3,7 @@ package aliyun
 import (
 	"errors"
 	"path"
+	"strconv"
 
 	"github.com/JointFaaS/Manager/env"
 	"github.com/aliyun/fc-go-sdk"
@@ -12,8 +13,18 @@ var service = "jointfaas"
 
 // CreateFunction :
 // sourceURL can be created by UploadSourceCode
-func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error) {
+func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS string, timeoutS string) (error) {
 	var err error
+	memorySizeI, err := strconv.Atoi(memoryS)
+	memorySize := int32(memorySizeI)
+	if err != nil {
+		return err
+	}
+	timeoutI, err := strconv.Atoi(timeoutS)
+	timeout := int32(timeoutI)
+	if err != nil {
+		return err
+	}
 	if e == env.PYTHON3 {
 		err = m.createPython3Function(path.Join(dir, "code"))
 	}else if e == env.JAVA8 {
@@ -44,6 +55,8 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env) (error)
 			Initializer: &initializer,
 			Handler: &handler,
 			Code: fc.NewCode().WithOSSBucketName(m.aliCodeBucket.BucketName).WithOSSObjectName(funcName),
+			MemorySize: &memorySize,
+			Timeout: &timeout,
 		},
 	})
 	if err != nil {

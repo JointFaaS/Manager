@@ -26,7 +26,7 @@ type Config struct {
 
 // PlatformManager is a layer to decouple backend
 type PlatformManager interface {
-	CreateFunction(funcName string, dir string, e env.Env) error
+	CreateFunction(funcName string, dir string, e env.Env, memory string, timeout string) error
 	InvokeFunction(funcName string, args []byte) ([]byte, error)
 	ListFunction() ([]*function.Meta, error)
 	GetFunction(funcName string) (*function.Meta, error)
