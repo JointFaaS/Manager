@@ -3,7 +3,7 @@ package httpmanager
 import "net/http"
 
 func (m *Manager) setRouter() {
-	m.server.HandleFunc("/createfunction", m.UploadHandler)
+	m.server.HandleFunc("/create", m.UploadHandler)
 	m.server.HandleFunc("/delete", m.DelHandler)
 	m.server.HandleFunc("/invoke", m.InvokeHandler)
 	m.server.HandleFunc("/register", m.RegisterHandler)
