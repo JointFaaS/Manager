@@ -12,7 +12,7 @@ type Worker struct {
 	addr string
 	id string
 
-	activeFunctions map[string]int32 // the number of the specified function instances
+	activeFunctions map[string]bool // the number of the specified function instances
 }
 
 type initRequestBody struct {
@@ -32,7 +32,7 @@ func New(addr string, id string) (*Worker, error) {
 	return &Worker{
 		addr: addr,
 		id: id,
-		activeFunctions: make(map[string]int32),
+		activeFunctions: make(map[string]bool),
 	}, nil
 }
 
@@ -51,6 +51,7 @@ func (w *Worker) InitFunction(funcName string, image string, codeURI string) (er
 	if err != nil {
 		return err
 	}
+	w.activeFunctions[funcName] = true
 
 	return nil
 }
@@ -66,4 +67,10 @@ func (w *Worker) CallFunction(funcName string, args []byte) ([]byte, error){
 		return nil, err
 	}
 	return ret, nil
+}
+
+// HasFunction
+func (w *Worker) HasFunction(funcName string) (bool){
+	e, isPresent := w.activeFunctions[funcName]
+	return isPresent && e
 }
