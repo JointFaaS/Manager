@@ -9,6 +9,7 @@ func (m *Manager) setRouter() {
 	m.server.HandleFunc("/register", m.RegisterHandler)
 	m.server.HandleFunc("/list", m.ListHandler)
 	m.server.HandleFunc("/get", m.GetHandler)
+	m.server.HandleFunc("/info", m.InfoHandler)
 }
 
 // ListenAndServe starts the Manager main process
