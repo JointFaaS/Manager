@@ -18,7 +18,13 @@ func (m *Manager) ListFunction() ([]*function.Meta, error) {
 	for i, v := range out.Functions {
 		ret[i] = &function.Meta{
 			FunctionName: *v.FunctionName,
-			// TODO
+			MemorySize: int64(*v.MemorySize),
+			Timeout: *v.Timeout,
+			Description: *v.Description,
+			CreatedTime: *v.CreatedTime,
+			CodeChecksum: *v.CodeChecksum,
+			EnvironmentVariables: v.EnvironmentVariables,
+			Runtime: *v.Runtime,
 		}
 	}
 	return ret, nil

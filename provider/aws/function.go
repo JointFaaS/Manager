@@ -84,6 +84,9 @@ func (m *Manager) GetFunction(funcName string) (*function.Meta, error) {
 		Handler: *f.Handler,
 		MemorySize: *f.MemorySize,
 		CreatedTime: *f.LastModified,
+		CodeSize: *f.CodeSize,
+		CodeChecksum: *f.CodeSha256,
+		Timeout: int32(*f.Timeout),
 	}, nil	
 }
 
@@ -115,6 +118,9 @@ func (m *Manager) ListFunction() ([]*function.Meta, error) {
 				Handler: *f.Handler,
 				MemorySize: *f.MemorySize,
 				CreatedTime: *f.LastModified,
+				CodeSize: *f.CodeSize,
+				CodeChecksum: *f.CodeSha256,
+				Timeout: int32(*f.Timeout),
 			})
 		}
 		marker = output.NextMarker
