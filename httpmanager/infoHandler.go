@@ -33,6 +33,8 @@ func (m *Manager) InfoHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	w.Header().Add("Content-Type", "application/json;charset=utf-8")
 	w.Write(jsonRet)
 
 	return

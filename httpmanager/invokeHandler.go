@@ -1,8 +1,8 @@
 package httpmanager
 
 import (
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 
 	"github.com/JointFaaS/Manager/worker"
@@ -13,7 +13,7 @@ type invokeBody struct {
 	Args     string `json:"args"`
 
 	// 'true' : may use native serverless, optimize cold-boot
-	// 'false' : prevent manager to use native serverless. avoid the limits of platform.
+	// 'false' : prevent manager to use native serverless. escape from the limits of specified platform.
 	EnableNative string `json:"enableNative"`
 }
 
@@ -43,7 +43,7 @@ func (m *Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 		worker = <-resCh
 	} else if req.EnableNative == "false" {
 		m.scheduler.GetWorkerMust(funcName, resCh)
-		worker = <- resCh
+		worker = <-resCh
 		if worker == nil {
 			http.Error(w, "No available worker", http.StatusBadRequest)
 			return
@@ -52,8 +52,6 @@ func (m *Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid enableNative, it must be 'true' or 'false'", http.StatusBadRequest)
 		return
 	}
-
-
 
 	// prom metrics
 	fnRequests.WithLabelValues(funcName).Inc()
