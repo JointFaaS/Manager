@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"context"
+	"time"
 
 	"github.com/JointFaaS/Manager/worker"
 )
@@ -64,7 +66,9 @@ func (m *Manager) InvokeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(res)
 	} else {
-		res, err := worker.CallFunction(funcName, args)
+		ctx, cancel := context.WithTimeout(context.TODO(), time.Second * 300)
+		defer cancel()
+		res, err := worker.CallFunction(ctx, funcName, args)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
