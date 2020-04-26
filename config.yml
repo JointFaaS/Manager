@@ -1,0 +1,18 @@
+aliyun:
+  accessKeyID: 
+  accessKeySecret: 
+  regionID: cn-beijing
+  fcEndpoint: https://id.cn-beijing-internal.fc.aliyuncs.com
+  ossEndpoint: oss-cn-beijing-internal.aliyuncs.com
+  userCodeBucket: jointfaas
+  aliCodeBucket: alifaas
+aws:
+  accessKeyID: 
+  accessKeySecret: 
+  account: 
+  lambdaRole: arn:aws-cn:iam::id:role/lambda-role
+  regionID: cn-north-1
+  userCodeBucket: jointfaas
+  awsCodeBucket: awsfaas
+server:
+  port: 8080
