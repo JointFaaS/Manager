@@ -8,6 +8,7 @@ import (
 	"github.com/JointFaaS/Manager/function"
 	"github.com/JointFaaS/Manager/provider/aliyun"
 	"github.com/JointFaaS/Manager/provider/aws"
+	"github.com/JointFaaS/Manager/provider/openstack"
 	"github.com/JointFaaS/Manager/scheduler"
 	"github.com/JointFaaS/Manager/worker"
 )
@@ -25,6 +26,7 @@ type StorageConfig struct {
 type Config struct {
 	Aliyun  aliyun.Config `yaml:"aliyun"`
 	Aws     aws.Config    `yaml:"aws"`
+	Openstack openstack.Config `yaml:"openstack"`
 	Server  HTTPConfig    `yaml:"server"`
 	Storage StorageConfig `yaml:"storage"`
 }
@@ -58,15 +60,12 @@ type Manager struct {
 	registrationResponse workerRegistrationResponseBody
 }
 
-// NewManager builds a manager with given config
-func NewManager(config Config) (*Manager, error) {
-	var platformManager PlatformManager
-	var rrb workerRegistrationResponseBody
-	var err error
+func detectJointfaasEnv(config *Config) (platformManager PlatformManager, rrb workerRegistrationResponseBody, err error) {
+	rrb.CenterStorage = config.Storage.Addr
 	if config.Aliyun.AccessKeyID != "" {
 		platformManager, err = aliyun.NewManagerWithConfig(config.Aliyun)
 		if err != nil {
-			return nil, err
+			return
 		}
 		rrb.AccessKeyID = config.Aliyun.AccessKeyID
 		rrb.AccessKeySecret = config.Aliyun.AccessKeySecret
@@ -75,16 +74,31 @@ func NewManager(config Config) (*Manager, error) {
 	} else if config.Aws.AccessKeyID != "" {
 		platformManager, err = aws.NewManagerWithConfig(config.Aws)
 		if err != nil {
-			return nil, err
+			return
 		}
 		rrb.AccessKeyID = config.Aws.AccessKeyID
 		rrb.AccessKeySecret = config.Aws.AccessKeySecret
 		rrb.JointfaasEnv = "aws"
 		rrb.Region = config.Aws.RegionID
+	} else if config.Openstack.StorageRootDir != "" {
+		platformManager, err = openstack.NewManagerWithConfig(config.Openstack)
+		if err != nil {
+			return
+		}
+		rrb.JointfaasEnv = "openstack"
 	} else {
-		return nil, errors.New("No available backend")
+		err = errors.New("No available backend")
+		return
 	}
-	rrb.CenterStorage = config.Storage.Addr
+	return
+}
+
+// NewManager builds a manager with given config
+func NewManager(config Config) (*Manager, error) {
+	platformManager, rrb, err := detectJointfaasEnv(&config)
+	if err != nil {
+		return nil, err
+	}
 
 	sche, err := scheduler.New(platformManager)
 	if err != nil {
