@@ -1,10 +1,12 @@
 package worker
 
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
+	"context"
+	"errors"
+	"log"
+
+	wpb "github.com/JointFaaS/Manager/pb/worker"
+	"google.golang.org/grpc"
 )
 
 // Worker is the wrapper handler fo interacting with worker
@@ -12,44 +14,41 @@ type Worker struct {
 	addr string
 	id string
 
+	wc wpb.WorkerClient
 	activeFunctions map[string]bool // the number of the specified function instances
-}
-
-type initRequestBody struct {
-	FuncName string `json:"funcName"`
-	Image string	`json:"image"`
-	CodeURI string	`json:"codeURI"`
-}
-
-type callRequestBody struct {
-	FuncName string `json:"funcName"`
-	Args string `json:"args"`
 }
 
 // New creates a worker handler
 func New(addr string, id string) (*Worker, error) {
-	// TODO: validation
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		log.Printf("can not connect with server %v", err)
+		return nil, err
+	}
+	rpcClient := wpb.NewWorkerClient(conn)
 	return &Worker{
 		addr: addr,
 		id: id,
+		wc: rpcClient,
 		activeFunctions: make(map[string]bool),
 	}, nil
 }
 
 // InitFunction initialise an instance of the given function
-func (w *Worker) InitFunction(funcName string, image string, codeURI string) (error) {
-	body := initRequestBody{
+func (w *Worker) InitFunction(ctx context.Context, funcName string, image string, codeURI string) (error) {
+	res, err := w.wc.InitFunction(ctx, &wpb.InitFunctionRequest{
 		FuncName: funcName,
 		Image: image,
 		CodeURI: codeURI,
-	}
-	jsonBody, err := json.Marshal(body)
+		Runtime: "",
+		Timeout: 3,
+		MemorySize: 128,
+	})
 	if err != nil {
 		return err
 	}
-	_, err = http.Post("http://" + w.addr + "/init", "application/json;charset=UTF-8", bytes.NewReader(jsonBody))
-	if err != nil {
-		return err
+	if res.GetCode() != wpb.InitFunctionResponse_OK {
+		return errors.New(res.GetMsg())
 	}
 	w.activeFunctions[funcName] = true
 
@@ -57,16 +56,18 @@ func (w *Worker) InitFunction(funcName string, image string, codeURI string) (er
 }
 
 // CallFunction 
-func (w *Worker) CallFunction(funcName string, args []byte) ([]byte, error){
-	resp, err := http.Post("http://" + w.addr + "/call?funcName=" + funcName, "application/json;charset=UTF-8", bytes.NewReader(args))
+func (w *Worker) CallFunction(ctx context.Context, funcName string, args []byte) ([]byte, error){
+	res, err := w.wc.Invoke(ctx, &wpb.InvokeRequest{
+		Name: funcName,
+		Payload: args,
+	})
 	if err != nil {
 		return nil, err
 	}
-	ret, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	if res.GetCode() != wpb.InvokeResponse_OK {
+		return nil, errors.New(res.GetCode().String())
 	}
-	return ret, nil
+	return res.GetOutput(), nil
 }
 
 // HasFunction
