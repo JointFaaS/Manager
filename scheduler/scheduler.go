@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"time"
@@ -62,12 +63,14 @@ func New(p PlatformStorageManager) (*Scheduler, error) {
 }
 
 func (s *Scheduler) Work() {
+	// process task
 	go func() {
 		for {
 			t := <- s.tasks
 			t.f()
 		}
 	}()
+	// produce schedule task regularly
 	go func() {
 		for {
 			s.tasks <- &scheduleTask{
@@ -96,7 +99,9 @@ func (s *Scheduler) Work() {
 							if err != nil {
 								return
 							}
-							err = worker.InitFunction(funcName, image, codeURI)
+							ctx, cancel := context.WithTimeout(context.TODO(), time.Second * 3)
+							defer cancel()
+							err = worker.InitFunction(ctx, funcName, image, codeURI)
 							if err != nil {
 								return
 							}
@@ -154,7 +159,9 @@ func (s *Scheduler) GetWorkerMust(funcName string, resCh chan *worker.Worker) {
 					if err != nil {
 						return
 					}
-					err = worker.InitFunction(funcName, image, codeURI)
+					ctx, cancel := context.WithTimeout(context.TODO(), time.Second * 3)
+					defer cancel()
+					err = worker.InitFunction(ctx, funcName, image, codeURI)
 					if err != nil {
 						return
 					}
