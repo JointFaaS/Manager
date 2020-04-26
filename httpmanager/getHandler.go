@@ -7,10 +7,6 @@ import (
 
 // GetHandler returns a function metadata
 func (m* Manager) GetHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Not support method", http.StatusBadRequest)
-		return
-	}
 	r.ParseForm()
 	funcName := r.FormValue("funcName")
 
@@ -25,6 +21,7 @@ func (m* Manager) GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Add("Content-Type", "application/json;charset=utf-8")
 	w.Write(jsonRet)
 	return
 }

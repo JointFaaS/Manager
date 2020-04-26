@@ -5,18 +5,18 @@ import (
 	"net/http"
 )
 
-type priceInputBody struct {
+type infoInputBody struct {
 }
 
-type priceOutputBody struct {
+type infoOutputBody struct {
 	Used        int32 `json:"used"`
 	Total       int32 `json:"total"`
 	UnitRequest int32 `json:"unitRequest"`
 	UnitPrice   int32 `json:"unitPrice"`
 }
 
-// PriceHandler invokes a function
-func (m *Manager) PriceHandler(w http.ResponseWriter, r *http.Request) {
+// InfoHandler returns the basic info of the cloud
+func (m *Manager) InfoHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Not support method", http.StatusBadRequest)
 		return
@@ -27,12 +27,14 @@ func (m *Manager) PriceHandler(w http.ResponseWriter, r *http.Request) {
 	// 	http.Error(w, err.Error(), http.StatusBadRequest)
 	// 	return
 	// }
-	res := priceOutputBody{}
+	res := infoOutputBody{}
 	jsonRet, err := json.Marshal(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	w.Header().Add("Content-Type", "application/json;charset=utf-8")
 	w.Write(jsonRet)
 
 	return

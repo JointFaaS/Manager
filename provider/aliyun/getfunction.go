@@ -7,7 +7,7 @@ import (
 
 // GetFunction returns metadata of a function
 func (m *Manager) GetFunction(funcName string) (*function.Meta, error) {
-	funcOut, err := m.fcClient.GetFunction(fc.NewGetFunctionInput(
+	v, err := m.fcClient.GetFunction(fc.NewGetFunctionInput(
 		service,
 		funcName,
 	))
@@ -15,9 +15,13 @@ func (m *Manager) GetFunction(funcName string) (*function.Meta, error) {
 		return nil, err
 	}
 	return &function.Meta{
-		FunctionName: funcName,
-		Description: *funcOut.Description,
-		Runtime: *funcOut.Runtime,
-		// TODO
+		FunctionName: *v.FunctionName,
+		MemorySize: int64(*v.MemorySize),
+		Timeout: *v.Timeout,
+		Description: *v.Description,
+		CreatedTime: *v.CreatedTime,
+		CodeChecksum: *v.CodeChecksum,
+		EnvironmentVariables: v.EnvironmentVariables,
+		Runtime: *v.Runtime,
 	}, nil
 }
