@@ -14,5 +14,9 @@ aws:
   regionID: cn-north-1
   userCodeBucket: jointfaas
   awsCodeBucket: awsfaas
+openstack:
+  storageRootDir: /tmp
 server:
   port: 8080
+storage:
+  addr: localhost:50001
