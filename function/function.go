@@ -6,7 +6,7 @@ type Meta struct {
 	Description           string           `json:"description"`
 	Runtime               string           `json:"runtime"`
 	Handler               string           `json:"handler"`
-	Timeout               int32            `json:"timeout"`
+	Timeout               int64            `json:"timeout"`
 	MemorySize            int64            `json:"memorySize"`
 	CodeSize              int64            `json:"codeSize"`
 	CodeChecksum          string           `json:"codeChecksum"`

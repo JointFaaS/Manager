@@ -11,7 +11,8 @@ import (
 	"github.com/JointFaaS/Manager/function"
 )
 
-// CreateFunction creates a function on lambda
+// CreateFunction creates a function and save the metadata. 
+// The default storage is local filesystem.
 func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS string, timeoutS string) (error) {
 	var err error
 	memorySize, err := strconv.ParseInt(memoryS, 10, 64)
@@ -45,6 +46,7 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS
 		Timeout: timeout,
 		Runtime: runtime,
 		Image: "",
+		// TODO: support custom image in future
 	})
 	m.storage.SetCode(funcName, code)
 

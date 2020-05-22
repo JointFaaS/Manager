@@ -14,7 +14,7 @@ import (
 )
 
 // CreateFunction creates a function on lambda
-func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS string, timeoutS string) (error) {
+func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS string, timeoutS string) error {
 	var err error
 	memorySize, err := strconv.ParseInt(memoryS, 10, 64)
 	if err != nil {
@@ -48,7 +48,7 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS
 	if err != nil {
 		return err
 	}
-	
+
 	runtime, handler := envToAWSEnv(e)
 
 	_, err = m.lambdaClient.CreateFunction(&lambda.CreateFunctionInput{
@@ -56,11 +56,11 @@ func (m *Manager) CreateFunction(funcName string, dir string, e env.Env, memoryS
 			ZipFile: awsZipByte,
 		},
 		FunctionName: &funcName,
-		Runtime: &runtime,
-		Handler: &handler,
-		Role: &m.lambdaRole,
-		MemorySize: &memorySize,
-		Timeout: &timeout,
+		Runtime:      &runtime,
+		Handler:      &handler,
+		Role:         &m.lambdaRole,
+		MemorySize:   &memorySize,
+		Timeout:      &timeout,
 	})
 	if err != nil {
 		return err
@@ -80,21 +80,21 @@ func (m *Manager) GetFunction(funcName string) (*function.Meta, error) {
 	f := output.Configuration
 	return &function.Meta{
 		FunctionName: funcName,
-		Runtime: *f.Runtime,	// TODO: translate
-		Handler: *f.Handler,
-		MemorySize: *f.MemorySize,
-		CreatedTime: *f.LastModified,
-		CodeSize: *f.CodeSize,
+		Runtime:      *f.Runtime, // TODO: translate
+		Handler:      *f.Handler,
+		MemorySize:   *f.MemorySize,
+		CreatedTime:  *f.LastModified,
+		CodeSize:     *f.CodeSize,
 		CodeChecksum: *f.CodeSha256,
-		Timeout: int32(*f.Timeout),
-	}, nil	
+		Timeout:      *f.Timeout,
+	}, nil
 }
 
 // InvokeFunction invokes a function by name
 func (m *Manager) InvokeFunction(funcName string, args []byte) ([]byte, error) {
 	output, err := m.lambdaClient.Invoke(&lambda.InvokeInput{
 		FunctionName: &funcName,
-		Payload: args,
+		Payload:      args,
 	})
 	if err != nil {
 		return nil, err
@@ -114,13 +114,13 @@ func (m *Manager) ListFunction() ([]*function.Meta, error) {
 		for _, f := range output.Functions {
 			functions = append(functions, &function.Meta{
 				FunctionName: *f.FunctionName,
-				Runtime: *f.Runtime,	// TODO: translate
-				Handler: *f.Handler,
-				MemorySize: *f.MemorySize,
-				CreatedTime: *f.LastModified,
-				CodeSize: *f.CodeSize,
+				Runtime:      *f.Runtime, // TODO: translate
+				Handler:      *f.Handler,
+				MemorySize:   *f.MemorySize,
+				CreatedTime:  *f.LastModified,
+				CodeSize:     *f.CodeSize,
 				CodeChecksum: *f.CodeSha256,
-				Timeout: int32(*f.Timeout),
+				Timeout:      *f.Timeout,
 			})
 		}
 		marker = output.NextMarker
@@ -132,7 +132,7 @@ func (m *Manager) ListFunction() ([]*function.Meta, error) {
 }
 
 // DeleteFunction deletes a function
-func (m *Manager) DeleteFunction(funcName string) (error) {
+func (m *Manager) DeleteFunction(funcName string) error {
 	_, err := m.lambdaClient.DeleteFunction(&lambda.DeleteFunctionInput{
 		FunctionName: &funcName,
 	})
