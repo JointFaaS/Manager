@@ -12,9 +12,9 @@ import (
 // Worker is the wrapper handler fo interacting with worker
 type Worker struct {
 	addr string
-	id string
+	id   string
 
-	wc wpb.WorkerClient
+	wc              wpb.WorkerClient
 	activeFunctions map[string]bool // the number of the specified function instances
 }
 
@@ -27,21 +27,21 @@ func New(addr string, id string) (*Worker, error) {
 	}
 	rpcClient := wpb.NewWorkerClient(conn)
 	return &Worker{
-		addr: addr,
-		id: id,
-		wc: rpcClient,
+		addr:            addr,
+		id:              id,
+		wc:              rpcClient,
 		activeFunctions: make(map[string]bool),
 	}, nil
 }
 
 // InitFunction initialise an instance of the given function
-func (w *Worker) InitFunction(ctx context.Context, funcName string, image string, codeURI string) (error) {
+func (w *Worker) InitFunction(ctx context.Context, funcName string, image string, codeURI string) error {
 	res, err := w.wc.InitFunction(ctx, &wpb.InitFunctionRequest{
-		FuncName: funcName,
-		Image: image,
-		CodeURI: codeURI,
-		Runtime: "",
-		Timeout: 3,
+		FuncName:   funcName,
+		Image:      image,
+		CodeURI:    codeURI,
+		Runtime:    "",
+		Timeout:    3,
 		MemorySize: 128,
 	})
 	if err != nil {
@@ -55,23 +55,26 @@ func (w *Worker) InitFunction(ctx context.Context, funcName string, image string
 	return nil
 }
 
-// CallFunction 
-func (w *Worker) CallFunction(ctx context.Context, funcName string, args []byte) ([]byte, error){
+// CallFunction
+func (w *Worker) CallFunction(ctx context.Context, funcName string, args []byte) ([]byte, error) {
 	res, err := w.wc.Invoke(ctx, &wpb.InvokeRequest{
-		Name: funcName,
+		Name:    funcName,
 		Payload: args,
 	})
 	if err != nil {
+		log.Printf("[liu]: invoke worker function error: %v\n", err)
 		return nil, err
 	}
 	if res.GetCode() != wpb.InvokeResponse_OK {
+		log.Printf("[liu]: invoke worker function error with code: %v\n", res.GetCode())
 		return nil, errors.New(res.GetCode().String())
 	}
+	log.Printf("[liu]: invoke succeed\n")
 	return res.GetOutput(), nil
 }
 
 // HasFunction
-func (w *Worker) HasFunction(funcName string) (bool){
+func (w *Worker) HasFunction(funcName string) bool {
 	e, isPresent := w.activeFunctions[funcName]
 	return isPresent && e
 }

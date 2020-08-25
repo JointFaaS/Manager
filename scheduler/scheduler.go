@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -17,6 +18,7 @@ type PlatformStorageManager interface {
 	GetCodeURI(funcName string) (string, error)
 	GetImage(funcName string) (string, error)
 }
+
 // Scheduler has serveral roles:
 // dispatch tasks to workers
 // maintain metrics
@@ -33,7 +35,7 @@ type Scheduler struct {
 	platformStorageManager PlatformStorageManager
 }
 
-// RegisterWorker 
+// RegisterWorker
 func (s *Scheduler) RegisterWorker(workerID string, workerAddr string) {
 	s.tasks <- &scheduleTask{
 		f: func() {
@@ -45,6 +47,7 @@ func (s *Scheduler) RegisterWorker(workerID string, workerAddr string) {
 					return
 				}
 				s.workers[workerID] = newWorker
+				fmt.Printf("Register worker %v to Workers: %v\n", newWorker, s.workers)
 			}
 		},
 	}
@@ -54,9 +57,15 @@ func (s *Scheduler) RegisterWorker(workerID string, workerAddr string) {
 func New(p PlatformStorageManager) (*Scheduler, error) {
 	s := &Scheduler{
 		workers: make(map[string]*worker.Worker),
+
+		/* key/value : funcName/workers[], means that which workers have the func's metadata (images and so on) */
 		funcToWorker: make(map[string][]*worker.Worker),
+
 		tasks: make(chan *scheduleTask, 64),
+
+		/* key/value : funcName/invoke times, to record how many times that a function is invoked */
 		funcInvokeMetrics: map[string]int32{},
+
 		platformStorageManager: p,
 	}
 	return s, nil
@@ -66,11 +75,11 @@ func (s *Scheduler) Work() {
 	// process task
 	go func() {
 		for {
-			t := <- s.tasks
+			t := <-s.tasks
 			t.f()
 		}
 	}()
-	// produce schedule task regularly
+	// produce schedule task regularly. The task register the metadata of every function to each worker.
 	go func() {
 		for {
 			s.tasks <- &scheduleTask{
@@ -86,10 +95,13 @@ func (s *Scheduler) Work() {
 						} else if len(workers) > 0 {
 							continue
 						}
+						fmt.Printf("[liu] workers: %v\n", s.workers)
 						for _, worker := range s.workers {
+							fmt.Printf("[liu] assigned worker: %v\n", worker)
 							if worker.HasFunction(funcName) {
 								continue
 							}
+							//Init the function if the function has not registered to the worker.
 							// TODO: exception handle
 							image, err := s.platformStorageManager.GetImage(funcName)
 							if err != nil {
@@ -99,15 +111,16 @@ func (s *Scheduler) Work() {
 							if err != nil {
 								return
 							}
-							ctx, cancel := context.WithTimeout(context.TODO(), time.Second * 3)
+							ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
 							defer cancel()
 							err = worker.InitFunction(ctx, funcName, image, codeURI)
 							if err != nil {
 								return
 							}
 							s.funcToWorker[funcName] = append(s.funcToWorker[funcName], worker)
-							break
-							// only run once, and golang range is random
+							fmt.Printf("[liu] append func %s to worker %v, funcWorkers: %v\n", funcName, worker, s.funcToWorker[funcName])
+							//break 				//commented by liu
+							// only run once, and golang range is random. liu: why only run once
 						}
 					}
 				},
@@ -120,10 +133,11 @@ func (s *Scheduler) Work() {
 func (s *Scheduler) GetWorker(funcName string, resCh chan *worker.Worker) {
 	s.tasks <- &scheduleTask{
 		f: func() {
+			//TODO: funcInvokeMetrics now is useless because it will not change scheduler's behavior.
 			times, isPresent := s.funcInvokeMetrics[funcName]
 			if isPresent == true {
 				s.funcInvokeMetrics[funcName] = times + 1
-			}else {
+			} else {
 				s.funcInvokeMetrics[funcName] = 1
 			}
 
@@ -143,7 +157,7 @@ func (s *Scheduler) GetWorkerMust(funcName string, resCh chan *worker.Worker) {
 			times, isPresent := s.funcInvokeMetrics[funcName]
 			if isPresent == true {
 				s.funcInvokeMetrics[funcName] = times + 1
-			}else {
+			} else {
 				s.funcInvokeMetrics[funcName] = 1
 			}
 
@@ -159,7 +173,7 @@ func (s *Scheduler) GetWorkerMust(funcName string, resCh chan *worker.Worker) {
 					if err != nil {
 						return
 					}
-					ctx, cancel := context.WithTimeout(context.TODO(), time.Second * 3)
+					ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
 					defer cancel()
 					err = worker.InitFunction(ctx, funcName, image, codeURI)
 					if err != nil {
