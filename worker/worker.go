@@ -78,3 +78,7 @@ func (w *Worker) HasFunction(funcName string) bool {
 	e, isPresent := w.activeFunctions[funcName]
 	return isPresent && e
 }
+
+func (w *Worker) GetId() string {
+	return w.id
+}
