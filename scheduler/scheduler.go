@@ -138,7 +138,7 @@ func (s *Scheduler) Work() {
 						workers, isPresent := s.funcToWorker[funcName]
 						if isPresent == false {
 							s.funcToWorker[funcName] = make([]*worker.Worker, 0)
-						} else if len(workers) > 0 {
+						} else if len(workers) == len(s.workers) {
 							continue
 						}
 						fmt.Printf("[liu] workers: %v\n", s.workers)
